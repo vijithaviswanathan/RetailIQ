@@ -1,7 +1,9 @@
 
-import requests
 import pytest
+import requests
 
+
+pytestmark = pytest.mark.integration
 
 API_URL = "http://localhost:8000/assistant/ask"
 TIMEOUT = 240

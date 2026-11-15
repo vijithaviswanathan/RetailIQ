@@ -36,3 +36,7 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+markers = [
+    "integration: tests requiring running RetailIQ services",
+]

@@ -27,5 +27,5 @@ jobs:
           pip install -e .
           pip install pytest
 
-      - name: Run tests
-        run: PYTHONPATH=src pytest -v
+      - name: Run standalone tests
+        run: PYTHONPATH=src pytest -v -m "not integration"

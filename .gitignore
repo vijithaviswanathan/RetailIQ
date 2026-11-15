@@ -1,0 +1,53 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data files
+data/raw/*
+data/processed/*
+data/external/*
+
+# Model artifacts
+*.pkl
+*.joblib
+*.model
+
+# Logs
+*.log
+
+# Operating system
+.DS_Store
+
+# IDE
+.vscode/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Local environment and Docker
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Local MLflow and datasets
+mlflow.db
+mlruns/

@@ -1,0 +1,25 @@
+
+# Data processing and analysis
+numpy
+pandas
+scipy
+statsmodels
+scikit-learn
+
+# Database
+SQLAlchemy
+psycopg2-binary
+openpyxl
+
+# Visualization and dashboard
+matplotlib
+plotly
+streamlit
+
+# API and AI assistant
+fastapi
+uvicorn
+pydantic
+requests
+
+# Model explainability

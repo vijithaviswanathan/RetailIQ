@@ -1,0 +1,77 @@
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: retailiq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: retailiq
+      POSTGRES_USER: retailiq
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-retailiq_local}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retailiq -d retailiq"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: .
+    container_name: retailiq-api
+    restart: unless-stopped
+    command: uvicorn retailiq.api.assistant:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql+psycopg2://retailiq:${POSTGRES_PASSWORD:-retailiq_local}@postgres:5432/retailiq
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./reports:/app/reports:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mlflow:
+        condition: service_started
+
+  dashboard:
+    build: .
+    container_name: retailiq-dashboard
+    restart: unless-stopped
+    command: streamlit run src/retailiq/dashboard.py --server.address=0.0.0.0 --server.port=8501
+    environment:
+      DATABASE_URL: postgresql+psycopg2://retailiq:${POSTGRES_PASSWORD:-retailiq_local}@postgres:5432/retailiq
+      RETAILIQ_ASSISTANT_URL: http://api:8000/assistant/ask
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    ports:
+      - "8501:8501"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_started
+      mlflow:
+        condition: service_started
+
+  mlflow:
+    build: .
+    container_name: retailiq-mlflow
+    restart: unless-stopped
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////app/mlflow.db
+      --default-artifact-root file:///app/mlruns
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./mlflow.db:/app/mlflow.db
+      - ./mlruns:/app/mlruns
+
+volumes:
+  postgres_data:

@@ -1,3 +1,4 @@
+
 import re
 import requests
 import numpy as np
@@ -8,22 +9,39 @@ from functools import lru_cache
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
+from retailiq.config import (
+    AI_PROVIDER,
+    CHAT_MODEL,
+    EMBEDDING_MODEL,
+    EMBEDDING_URL,
+    CHAT_URL,
+    OPENAI_API_KEY,
+    OPENAI_BASE_URL,
+    OPENAI_EMBEDDING_MODEL,
+    OPENAI_CHAT_MODEL,
+)
+
 
 app = FastAPI(title="RetailIQ RAG Decision Assistant")
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 CONTEXT_PATH = PROJECT_ROOT / "reports" / "decision_context.md"
 
-from retailiq.config import (
-    CHAT_MODEL,
-    EMBEDDING_MODEL,
-    EMBEDDING_URL,
-    CHAT_URL,
-)
-
 TOP_K = 3
 REQUEST_TIMEOUT = 180
 MIN_RELEVANCE_SCORE = 0.50
+
+ACTIVE_EMBEDDING_MODEL = (
+    OPENAI_EMBEDDING_MODEL
+    if AI_PROVIDER == "openai"
+    else EMBEDDING_MODEL
+)
+
+ACTIVE_GENERATION_MODEL = (
+    OPENAI_CHAT_MODEL
+    if AI_PROVIDER == "openai"
+    else CHAT_MODEL
+)
 
 STOP_WORDS = {
     "the", "and", "for", "with", "from", "that", "this",
@@ -102,22 +120,54 @@ def split_into_chunks(document):
 
 
 def get_embeddings(texts):
-    """Generate embeddings using Ollama."""
-    response = requests.post(
-        EMBEDDING_URL,
-        json={
-            "model": EMBEDDING_MODEL,
-            "input": texts,
-        },
-        timeout=REQUEST_TIMEOUT,
-    )
+    """Generate embeddings using the configured AI provider."""
 
-    response.raise_for_status()
+    if AI_PROVIDER == "openai":
+        if not OPENAI_API_KEY:
+            raise RuntimeError(
+                "OPENAI_API_KEY is required when AI_PROVIDER=openai."
+            )
 
-    embeddings = response.json().get("embeddings")
+        response = requests.post(
+            f"{OPENAI_BASE_URL}/embeddings",
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": OPENAI_EMBEDDING_MODEL,
+                "input": texts,
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        response.raise_for_status()
+
+        data = response.json().get("data", [])
+        data.sort(key=lambda item: item["index"])
+
+        embeddings = [
+            item["embedding"] for item in data
+        ]
+
+    else:
+        response = requests.post(
+            EMBEDDING_URL,
+            json={
+                "model": EMBEDDING_MODEL,
+                "input": texts,
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        response.raise_for_status()
+
+        embeddings = response.json().get("embeddings")
 
     if not embeddings or len(embeddings) != len(texts):
-        raise ValueError("Ollama returned invalid embeddings.")
+        raise ValueError(
+            f"{AI_PROVIDER} returned invalid embeddings."
+        )
 
     vectors = np.asarray(embeddings, dtype=np.float32)
 
@@ -211,20 +261,15 @@ def retrieve_evidence(question, top_k=TOP_K):
 
 
 def select_relevant_evidence(question, evidence):
-    """
-    Restrict evidence to the project section that matches
-    the user's question.
-    """
+    """Restrict evidence to the project section matching the question."""
     q = question.lower()
 
-    # Forecasting questions
     if any(term in q for term in [
         "forecast", "forecasting", "mae", "rmse",
         "mape", "holt-winters", "seasonal naive",
     ]):
         keywords = ["revenue forecasting"]
 
-    # Profit optimization questions
     elif any(term in q for term in [
         "incremental profit", "net profit",
         "profit per", "profit optimization",
@@ -232,7 +277,6 @@ def select_relevant_evidence(question, evidence):
     ]):
         keywords = ["profit-based campaign optimization"]
 
-    # Campaign policy / allocation questions
     elif any(term in q for term in [
         "campaign allocation", "allocation strategy",
         "uplift-based allocation", "random allocation",
@@ -240,7 +284,6 @@ def select_relevant_evidence(question, evidence):
     ]) and not any(term in q for term in ["srm", "sample ratio"]):
         keywords = ["campaign policy evaluation"]
 
-    # Conversion experiment and SRM questions
     elif any(term in q for term in [
         "srm", "sample ratio", "conversion rate",
         "pairwise conversion", "holm correction",
@@ -248,21 +291,18 @@ def select_relevant_evidence(question, evidence):
     ]):
         keywords = ["campaign experimentation results"]
 
-    # Uplift modeling questions
     elif any(term in q for term in [
         "uplift model", "qini", "t-learner",
         "s-learner", "x-learner",
     ]):
         keywords = ["uplift modeling"]
 
-    # Purchase propensity questions
     elif any(term in q for term in [
         "purchase propensity", "propensity model",
         "purchase prediction",
     ]):
         keywords = ["purchase propensity"]
 
-    # Churn / inactivity questions
     elif any(term in q for term in [
         "churn", "customer inactivity", "inactive customer",
     ]):
@@ -283,12 +323,7 @@ def select_relevant_evidence(question, evidence):
 
 
 def generate_profit_answer():
-    """
-    Return the verified project profit results directly.
-
-    This avoids the language model omitting confidence intervals
-    or making unsupported statistical-significance claims.
-    """
+    """Return verified project profit results directly."""
     return """**Direct Answer**
 
 Random 30% allocation generated the highest estimated incremental profit: **£227.95 per 1,000 customers**, compared with £167.94 for uplift-based 30% allocation.
@@ -338,7 +373,6 @@ def generate_answer(question, evidence):
 
     q = question.lower()
 
-    # Use the verified deterministic answer for profit questions.
     if (
         "incremental profit" in q
         or "profit optimization" in q
@@ -372,7 +406,7 @@ MANDATORY RULES:
 
 2. Scope
 - Answer only the question asked.
-- Use only the supplied evidence relevant to that question.
+- Use only the supplied evidence relevant to the question.
 - Do not introduce other campaign strategies, policy evaluations,
   profit results, or model results unless explicitly requested.
 - Do not add an unavailable-information section unless the
@@ -418,45 +452,79 @@ provide exact pairwise p-values, report the significance only.
 Do not generate p-values such as <0.001.
 """
 
-    payload = {
-        "model": CHAT_MODEL,
-        "stream": False,
-        "options": {
-            "temperature": 0,
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt,
         },
-        "messages": [
-            {
-                "role": "system",
-                "content": system_prompt,
+        {
+            "role": "user",
+            "content": (
+                f"QUESTION:\n{question}\n\n"
+                f"PROJECT EVIDENCE:\n{evidence_text}\n\n"
+                "Answer only the requested question. "
+                "Use exact source headings for citations."
+            ),
+        },
+    ]
+
+    if AI_PROVIDER == "openai":
+        if not OPENAI_API_KEY:
+            raise RuntimeError(
+                "OPENAI_API_KEY is required when AI_PROVIDER=openai."
+            )
+
+        response = requests.post(
+            f"{OPENAI_BASE_URL}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json",
             },
-            {
-                "role": "user",
-                "content": (
-                    f"QUESTION:\n{question}\n\n"
-                    f"PROJECT EVIDENCE:\n{evidence_text}\n\n"
-                    "Answer only the requested question. "
-                    "Use exact source headings for citations."
-                ),
+            json={
+                "model": OPENAI_CHAT_MODEL,
+                "temperature": 0,
+                "messages": messages,
             },
-        ],
-    }
+            timeout=REQUEST_TIMEOUT,
+        )
 
-    response = requests.post(
-        CHAT_URL,
-        json=payload,
-        timeout=REQUEST_TIMEOUT,
-    )
+        response.raise_for_status()
 
-    response.raise_for_status()
+        answer = (
+            response.json()
+            .get("choices", [{}])[0]
+            .get("message", {})
+            .get("content")
+        )
 
-    answer = response.json().get(
-        "message", {}
-    ).get("content")
+    else:
+        response = requests.post(
+            CHAT_URL,
+            json={
+                "model": CHAT_MODEL,
+                "stream": False,
+                "options": {
+                    "temperature": 0,
+                },
+                "messages": messages,
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
 
-    if not answer:
-        raise ValueError("Ollama returned an empty answer.")
+        response.raise_for_status()
 
-    return answer
+        answer = (
+            response.json()
+            .get("message", {})
+            .get("content")
+        )
+
+    if not isinstance(answer, str) or not answer.strip():
+        raise ValueError(
+            f"{AI_PROVIDER} returned an empty or invalid answer."
+        )
+
+    return answer.strip()
 
 
 @app.post("/assistant/ask")
@@ -481,9 +549,7 @@ def ask_assistant(request: Question):
             "retrieved_evidence": [
                 {
                     "source": item["heading"],
-                    "similarity": round(
-                        item["similarity"], 4
-                    ),
+                    "similarity": round(item["similarity"], 4),
                     "relevance_score": round(
                         item["relevance_score"], 4
                     ),
@@ -492,8 +558,9 @@ def ask_assistant(request: Question):
                 for item in relevant_evidence
             ],
             "retrieval_count": len(relevant_evidence),
-            "embedding_model": EMBEDDING_MODEL,
-            "generation_model": CHAT_MODEL,
+            "ai_provider": AI_PROVIDER,
+            "embedding_model": ACTIVE_EMBEDDING_MODEL,
+            "generation_model": ACTIVE_GENERATION_MODEL,
         }
 
     except FileNotFoundError as exc:
@@ -502,13 +569,19 @@ def ask_assistant(request: Question):
             detail=str(exc),
         )
 
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=str(exc),
+        )
+
     except requests.RequestException as exc:
         raise HTTPException(
             status_code=503,
-            detail=f"Ollama connection failed: {exc}",
+            detail=f"{AI_PROVIDER} connection failed: {exc}",
         )
 
-    except (ValueError, KeyError) as exc:
+    except (ValueError, KeyError, IndexError) as exc:
         raise HTTPException(
             status_code=500,
             detail=f"RAG processing failed: {exc}",

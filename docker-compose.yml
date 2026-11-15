@@ -28,6 +28,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://retailiq:${POSTGRES_PASSWORD:-retailiq_local}@postgres:5432/retailiq
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
     ports:
       - "8000:8000"
     volumes:

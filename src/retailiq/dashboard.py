@@ -312,31 +312,24 @@ st.markdown(
 
     /* Tables */
 
-    /* Tables: black text on white background */
-    [data-testid="stDataFrame"],
-    [data-testid="stDataFrame"] *,
-    [data-testid="stTable"],
-    [data-testid="stTable"] *,
-    [data-testid="stDataEditor"],
-    [data-testid="stDataEditor"] * {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        opacity: 1 !important;
-    }
+    /* Tables: retain Streamlit rendering, use black text */
 
     [data-testid="stDataFrame"] {
+        background-color: #FFFFFF !important;
+        border: 1px solid #D8E1EB !important;
+        border-radius: 12px !important;
+
         --gdg-bg-cell: #FFFFFF;
         --gdg-bg-cell-medium: #FFFFFF;
         --gdg-bg-header: #FFFFFF;
         --gdg-bg-header-hovered: #FFFFFF;
+
         --gdg-text-dark: #000000;
         --gdg-text-medium: #000000;
         --gdg-text-light: #000000;
         --gdg-text-header: #000000;
-        --gdg-border-color: #000000;
     }
-
+    
     /* Charts */
 
     /* Plotly labels and legends */

@@ -313,7 +313,7 @@ st.markdown(
     /* Tables */
 
     [data-testid="stDataFrame"] {
-        border: 1px solid #FFFFFF !important;
+        border: 1px solid #D8E1EB!important;
         border-radius: 12px !important;
     }
 

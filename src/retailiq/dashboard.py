@@ -1,5 +1,7 @@
 import os
+import sys
 import textwrap
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -11,7 +13,18 @@ from sqlalchemy import create_engine, text
 
 
 # ============================================================
-# CONFIGURATION
+# PROJECT IMPORT CONFIGURATION
+# ============================================================
+
+# Add the project's src directory to Python's import path.
+PROJECT_SRC = str(Path(__file__).resolve().parents[1])
+
+if PROJECT_SRC not in sys.path:
+    sys.path.insert(0, PROJECT_SRC)
+
+
+# ============================================================
+# STREAMLIT CONFIGURATION
 # ============================================================
 
 st.set_page_config(
@@ -21,7 +34,17 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+# ============================================================
+# DATABASE CONFIGURATION
+# ============================================================
+
 from retailiq.config import DATABASE_URL
+
+
+# ============================================================
+# API CONFIGURATION
+# ============================================================
 
 ASSISTANT_URL = os.getenv(
     "RETAILIQ_ASSISTANT_URL",

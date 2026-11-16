@@ -221,13 +221,20 @@ st.markdown(
 
     /* Metric delta labels and arrows */
 
+    [data-testid="stMetric"],
+    [data-testid="stMetric"] *,
     [data-testid="stMetricDelta"],
-    [data-testid="stMetricDelta"] *,
-    [data-testid="stMetricDelta"] svg {
-        color: #FFFFFF !important;
-        fill: #FFFFFF !important;
-        stroke: #FFFFFF !important;
+    [data-testid="stMetricDelta"] * {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         opacity: 1 !important;
+    }
+
+    [data-testid="stMetric"] svg,
+    [data-testid="stMetricDelta"] svg {
+        fill: #000000 !important;
+        color: #000000 !important;
+        stroke: #000000 !important;
     }
 
     /* Buttons */
@@ -305,42 +312,84 @@ st.markdown(
 
     /* Tables */
 
-    [data-testid="stDataFrame"] {
-        border: 1px solid #D8E1EB !important;
-        border-radius: 12px !important;
+    /* Tables: black text on white background */
+    [data-testid="stDataFrame"],
+    [data-testid="stDataFrame"] *,
+    [data-testid="stTable"],
+    [data-testid="stTable"] *,
+    [data-testid="stDataEditor"],
+    [data-testid="stDataEditor"] * {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        opacity: 1 !important;
+    }
 
-        --gdg-text-dark: #FFFFFF;
-        --gdg-text-medium: #FFFFFF;
-        --gdg-text-light: #FFFFFF;
-        --gdg-text-header: #FFFFFF;
+    [data-testid="stDataFrame"] {
+        --gdg-bg-cell: #FFFFFF;
+        --gdg-bg-cell-medium: #FFFFFF;
+        --gdg-bg-header: #FFFFFF;
+        --gdg-bg-header-hovered: #FFFFFF;
+        --gdg-text-dark: #000000;
+        --gdg-text-medium: #000000;
+        --gdg-text-light: #000000;
+        --gdg-text-header: #000000;
+        --gdg-border-color: #000000;
     }
 
     /* Charts */
 
-    [data-testid="stPlotlyChart"] {
-        background: #FFFFFF !important;
-        border: 1px solid #D8E1EB !important;
-        border-radius: 14px !important;
-        padding: 7px !important;
+    /* Plotly labels and legends */
+    [data-testid="stPlotlyChart"] .legend text,
+    [data-testid="stPlotlyChart"] .xtick text,
+    [data-testid="stPlotlyChart"] .ytick text,
+    [data-testid="stPlotlyChart"] .colorbar text,
+    [data-testid="stPlotlyChart"] .annotation-text {
+        fill: #000000 !important;
     }
 
     /* Expanders */
 
-    [data-testid="stExpander"] {
-        background: #FFFFFF !important;
-        border: 1px solid #D8E1EB !important;
-        border-radius: 12px !important;
-    }
-
-    /* Expander titles and arrows */
+    /* Expanders: black text, white background */
+    [data-testid="stExpander"],
+    [data-testid="stExpander"] details,
     [data-testid="stExpander"] summary,
     [data-testid="stExpander"] summary *,
-    [data-testid="stExpander"] summary svg {
-        color: #FFFFFF !important;
-        fill: #FFFFFF !important;
-        stroke: #FFFFFF !important;
+    [data-testid="stExpander"] div {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         opacity: 1 !important;
-        font-weight: 650 !important;
+    }
+
+    [data-testid="stExpander"] svg {
+        fill: #000000 !important;
+        color: #000000 !important;
+        stroke: #000000 !important;
+    }
+
+    /* Dropdown control and opened options */
+    [data-baseweb="select"],
+    [data-baseweb="select"] *,
+    [data-baseweb="popover"],
+    [data-baseweb="popover"] *,
+    [data-baseweb="menu"],
+    [data-baseweb="menu"] *,
+    [data-baseweb="listbox"],
+    [data-baseweb="listbox"] *,
+    [role="listbox"],
+    [role="option"] {
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        opacity: 1 !important;
+    }
+
+    [data-baseweb="select"] svg,
+    [data-baseweb="popover"] svg {
+        fill: #000000 !important;
+        color: #000000 !important;
+        stroke: #000000 !important;
     }
 
     /* Alerts */
@@ -466,20 +515,32 @@ st.markdown(
         fill: #26364A !important;
     }
 
-    /* Date range picker: readable text */
-    [data-testid="stDateInput"] input,
-    [data-testid="stDateInput"] [data-baseweb="input"] *,
-    [data-baseweb="datepicker"] input {
-        color: #FFFFFF !important;
-        -webkit-text-fill-color: #FFFFFF !important;
+    
+    /* Date picker: black text on white background */
+    [data-testid="stDateInput"],
+    [data-testid="stDateInput"] *,
+    [data-baseweb="datepicker"],
+    [data-baseweb="datepicker"] * {
+        olor: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        background-color: #FFFFFF !important;
         opacity: 1 !important;
     }
 
-    [data-testid="stDateInput"] svg {
-        color: #FFFFFF !important;
-        fill: #FFFFFF !important;
-        opacity: 1 !important;
+    [data-testid="stDateInput"] input,
+    [data-baseweb="datepicker"] input {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        background-color: #FFFFFF !important;
     }
+
+    [data-testid="stDateInput"] svg,
+    [data-baseweb="datepicker"] svg {
+        fill: #000000 !important;
+        color: #000000 !important;
+        stroke: #000000 !important;
+    }
+    
 
 
     </style>

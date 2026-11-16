@@ -219,8 +219,14 @@ st.markdown(
         opacity: 1 !important;
     }
 
+    /* Metric delta labels and arrows */
+
     [data-testid="stMetricDelta"],
-    [data-testid="stMetricDelta"] * {
+    [data-testid="stMetricDelta"] *,
+    [data-testid="stMetricDelta"] svg {
+        color: #FFFFFF !important;
+        fill: #FFFFFF !important;
+        stroke: #FFFFFF !important;
         opacity: 1 !important;
     }
 
@@ -302,10 +308,11 @@ st.markdown(
     [data-testid="stDataFrame"] {
         border: 1px solid #D8E1EB !important;
         border-radius: 12px !important;
-    }
 
-    [data-testid="stDataFrame"] * {
-        color: #26364A !important;
+        --gdg-text-dark: #FFFFFF;
+        --gdg-text-medium: #FFFFFF;
+        --gdg-text-light: #FFFFFF;
+        --gdg-text-header: #FFFFFF;
     }
 
     /* Charts */
@@ -325,9 +332,14 @@ st.markdown(
         border-radius: 12px !important;
     }
 
+    /* Expander titles and arrows */
     [data-testid="stExpander"] summary,
-    [data-testid="stExpander"] summary p {
-        color: #26364A !important;
+    [data-testid="stExpander"] summary *,
+    [data-testid="stExpander"] summary svg {
+        color: #FFFFFF !important;
+        fill: #FFFFFF !important;
+        stroke: #FFFFFF !important;
+        opacity: 1 !important;
         font-weight: 650 !important;
     }
 
@@ -454,19 +466,19 @@ st.markdown(
         fill: #26364A !important;
     }
 
-    /* Keep date-range values readable on the light dashboard */
-    [data-testid="stDateInput"] [data-baseweb="input"],
-    [data-testid="stDateInput"] [data-baseweb="input"] > div,
+    /* Date range picker: readable text */
     [data-testid="stDateInput"] input,
+    [data-testid="stDateInput"] [data-baseweb="input"] *,
     [data-baseweb="datepicker"] input {
-        color: #26364A !important;
-        -webkit-text-fill-color: #26364A !important;
-        background-color: #FFFFFF !important;
+        color: #FFFFFF !important;
+        -webkit-text-fill-color: #FFFFFF !important;
         opacity: 1 !important;
     }
 
-    [data-testid="stDateInput"] [data-baseweb="input"] {
-        border-color: #B8C8D9 !important;
+    [data-testid="stDateInput"] svg {
+        color: #FFFFFF !important;
+        fill: #FFFFFF !important;
+        opacity: 1 !important;
     }
 
 

@@ -2048,12 +2048,14 @@ elif page == "Causal ML & Optimization":
         "Highest Estimated Profit",
         "£227.95",
         "Random 30% per 1,000 customers",
+        delta_color="off",
     )
 
     c2.metric(
         "Uplift-Based Profit",
         "£167.94",
         "Per 1,000 customers",
+        delta_color="off",
     )
 
     st.markdown(
@@ -2469,18 +2471,21 @@ elif page == "Predictive ML":
             "Best ROC-AUC",
             "0.7202",
             "Logistic Regression",
+            delta_color="off",
         )
 
         c2.metric(
             "Best PR-AUC",
             "0.6599",
             "Logistic Regression",
+            delta_color="off",
         )
 
         c3.metric(
             "Best Precision",
             "0.7245",
             "XGBoost",
+            delta_color="off",
         )
 
         st.write(
@@ -2497,18 +2502,21 @@ elif page == "Predictive ML":
             "Best ROC-AUC",
             "0.7279",
             "Random Forest",
+            delta_color="off",
         )
 
         c2.metric(
             "Best PR-AUC",
             "0.5680",
             "Random Forest",
+            delta_color="off",
         )
 
         c3.metric(
             "Best F1",
             "0.6215",
             "XGBoost",
+            delta_color="off",
         )
 
         st.write(

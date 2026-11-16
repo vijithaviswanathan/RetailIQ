@@ -21,10 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://localhost/retailiq",
-)
+from retailiq.config import DATABASE_URL
 
 ASSISTANT_URL = os.getenv(
     "RETAILIQ_ASSISTANT_URL",

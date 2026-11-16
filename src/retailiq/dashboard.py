@@ -198,9 +198,16 @@ st.markdown(
 
     [data-testid="stMetric"] {
         background: #FFFFFF !important;
+        background-color: #FFFFFF !important;
         border: 1px solid #000000 !important;
         border-radius: 15px !important;
         padding: 17px !important;
+        box-shadow: none !important;
+    }
+
+    /* Remove colored backgrounds from all metric contents */
+    [data-testid="stMetric"] * {
+        background-color: transparent !important;
         box-shadow: none !important;
     }
 
@@ -209,8 +216,6 @@ st.markdown(
     [data-testid="stMetricLabel"] * {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        font-size: 13px !important;
-        font-weight: 600 !important;
         opacity: 1 !important;
     }
 
@@ -219,24 +224,23 @@ st.markdown(
     [data-testid="stMetricValue"] * {
         color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
-        font-weight: 750 !important;
         opacity: 1 !important;
+        font-weight: 700 !important;
     }
 
-    /* Metric delta text and arrows */
+    /* Model names / delta text */
     [data-testid="stMetricDelta"],
-    [data-testid="stMetricDelta"] * {
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        opacity: 1 !important;
-    }
-
+    [data-testid="stMetricDelta"] *,
     [data-testid="stMetricDelta"] svg,
     [data-testid="stMetricDelta"] svg * {
-        fill: #000000 !important;
-        color: #000000 !important;
-        stroke: #000000 !important;
-    }
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    fill: #000000 !important;
+    stroke: #000000 !important;
+    opacity: 1 !important;
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+}
 
     /* Buttons */
 

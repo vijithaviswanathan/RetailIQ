@@ -1,11 +1,43 @@
 
 import os
 
-# Database
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://localhost/retailiq",
-)
+# Database configuration
+def get_database_url():
+    # First: environment variable (local Docker / Render)
+    database_url = os.getenv("DATABASE_URL", "").strip()
+
+    # Second: Streamlit Cloud secrets
+    if not database_url:
+        try:
+            import streamlit as st
+            database_url = str(
+                st.secrets.get("DATABASE_URL", "")
+            ).strip()
+        except Exception:
+            database_url = ""
+
+    # Local development fallback
+    if not database_url:
+        database_url = "postgresql+psycopg2://localhost/retailiq"
+
+    # Normalize PostgreSQL URLs for SQLAlchemy
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace(
+            "postgres://",
+            "postgresql+psycopg2://",
+            1,
+        )
+    elif database_url.startswith("postgresql://"):
+        database_url = database_url.replace(
+            "postgresql://",
+            "postgresql+psycopg2://",
+            1,
+        )
+
+    return database_url
+
+
+DATABASE_URL = get_database_url()
 
 # AI provider: ollama, openai, or gemini
 AI_PROVIDER = os.getenv("AI_PROVIDER", "ollama").strip().lower()

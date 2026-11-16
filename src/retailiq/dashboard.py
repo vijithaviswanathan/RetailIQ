@@ -334,23 +334,18 @@ st.markdown(
 
     /* Expanders */
 
-    /* Expanders: black text, white background */
-    [data-testid="stExpander"],
-    [data-testid="stExpander"] details,
-    [data-testid="stExpander"] summary,
-    [data-testid="stExpander"] summary *,
-    [data-testid="stExpander"] div {
-        background-color: #FFFFFF !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        opacity: 1 !important;
+    [data-testid="stExpander"] {
+        background: #FFFFFF !important;
+        border: 1px solid #D8E1EB !important;
+        border-radius: 12px !important;
     }
 
-    [data-testid="stExpander"] svg {
-        fill: #000000 !important;
-        color: #000000 !important;
-        stroke: #000000 !important;
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary p {
+        color: #26364A !important;
+        font-weight: 650 !important;
     }
+
 
     /* Dropdown control and opened options */
     [data-baseweb="select"],

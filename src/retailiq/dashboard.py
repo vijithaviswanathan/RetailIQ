@@ -240,8 +240,14 @@ st.markdown(
     opacity: 1 !important;
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
-}
+    }
 
+    /* Hide metric delta arrows */
+    
+    [data-testid="stMetricDelta"] svg {
+        display: none !important;
+    }
+    
     /* Buttons */
 
     div.stButton > button {

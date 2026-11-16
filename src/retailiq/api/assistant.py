@@ -19,6 +19,10 @@ from retailiq.config import (
     OPENAI_BASE_URL,
     OPENAI_EMBEDDING_MODEL,
     OPENAI_CHAT_MODEL,
+    GEMINI_API_KEY,
+    GEMINI_BASE_URL,
+    GEMINI_EMBEDDING_MODEL,
+    GEMINI_CHAT_MODEL,
 )
 
 
@@ -31,17 +35,17 @@ TOP_K = 3
 REQUEST_TIMEOUT = 180
 MIN_RELEVANCE_SCORE = 0.50
 
-ACTIVE_EMBEDDING_MODEL = (
-    OPENAI_EMBEDDING_MODEL
-    if AI_PROVIDER == "openai"
-    else EMBEDDING_MODEL
-)
+ACTIVE_EMBEDDING_MODEL = {
+    "ollama": EMBEDDING_MODEL,
+    "openai": OPENAI_EMBEDDING_MODEL,
+    "gemini": GEMINI_EMBEDDING_MODEL,
+}[AI_PROVIDER]
 
-ACTIVE_GENERATION_MODEL = (
-    OPENAI_CHAT_MODEL
-    if AI_PROVIDER == "openai"
-    else CHAT_MODEL
-)
+ACTIVE_GENERATION_MODEL = {
+    "ollama": CHAT_MODEL,
+    "openai": OPENAI_CHAT_MODEL,
+    "gemini": GEMINI_CHAT_MODEL,
+}[AI_PROVIDER]
 
 STOP_WORDS = {
     "the", "and", "for", "with", "from", "that", "this",
@@ -119,8 +123,11 @@ def split_into_chunks(document):
     return chunks
 
 
-def get_embeddings(texts):
+def get_embeddings(texts, task_type=None):
     """Generate embeddings using the configured AI provider."""
+
+    if not texts:
+        raise ValueError("Cannot generate embeddings for empty input.")
 
     if AI_PROVIDER == "openai":
         if not OPENAI_API_KEY:
@@ -145,9 +152,45 @@ def get_embeddings(texts):
 
         data = response.json().get("data", [])
         data.sort(key=lambda item: item["index"])
+        embeddings = [item["embedding"] for item in data]
 
+    elif AI_PROVIDER == "gemini":
+        if not GEMINI_API_KEY:
+            raise RuntimeError(
+                "GEMINI_API_KEY is required when AI_PROVIDER=gemini."
+            )
+
+        gemini_task_type = task_type or "RETRIEVAL_DOCUMENT"
+
+        requests_payload = [
+            {
+                "model": f"models/{GEMINI_EMBEDDING_MODEL}",
+                "content": {
+                    "parts": [{"text": text}]
+                },
+                "taskType": gemini_task_type,
+            }
+            for text in texts
+        ]
+
+        response = requests.post(
+            (
+                f"{GEMINI_BASE_URL}/models/"
+                f"{GEMINI_EMBEDDING_MODEL}:batchEmbedContents"
+            ),
+            headers={
+                "x-goog-api-key": GEMINI_API_KEY,
+                "Content-Type": "application/json",
+            },
+            json={"requests": requests_payload},
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        response.raise_for_status()
+
+        data = response.json().get("embeddings", [])
         embeddings = [
-            item["embedding"] for item in data
+            item["values"] for item in data
         ]
 
     else:
@@ -201,9 +244,10 @@ def load_knowledge_base():
     document = CONTEXT_PATH.read_text(encoding="utf-8")
     chunks = split_into_chunks(document)
 
-    vectors = get_embeddings([
-        chunk["text"] for chunk in chunks
-    ])
+    vectors = get_embeddings(
+        [chunk["text"] for chunk in chunks],
+        task_type="RETRIEVAL_DOCUMENT",
+    )
 
     return chunks, vectors
 
@@ -212,7 +256,10 @@ def retrieve_evidence(question, top_k=TOP_K):
     """Hybrid semantic and lexical evidence retrieval."""
     chunks, document_vectors = load_knowledge_base()
 
-    query_vector = get_embeddings([question])[0]
+    query_vector = get_embeddings(
+        [question],
+        task_type="RETRIEVAL_QUERY",
+    )[0]
 
     semantic_scores = cosine_similarity(
         query_vector,
@@ -452,21 +499,12 @@ provide exact pairwise p-values, report the significance only.
 Do not generate p-values such as <0.001.
 """
 
-    messages = [
-        {
-            "role": "system",
-            "content": system_prompt,
-        },
-        {
-            "role": "user",
-            "content": (
-                f"QUESTION:\n{question}\n\n"
-                f"PROJECT EVIDENCE:\n{evidence_text}\n\n"
-                "Answer only the requested question. "
-                "Use exact source headings for citations."
-            ),
-        },
-    ]
+    user_prompt = (
+        f"QUESTION:\n{question}\n\n"
+        f"PROJECT EVIDENCE:\n{evidence_text}\n\n"
+        "Answer only the requested question. "
+        "Use exact source headings for citations."
+    )
 
     if AI_PROVIDER == "openai":
         if not OPENAI_API_KEY:
@@ -483,7 +521,10 @@ Do not generate p-values such as <0.001.
             json={
                 "model": OPENAI_CHAT_MODEL,
                 "temperature": 0,
-                "messages": messages,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
             },
             timeout=REQUEST_TIMEOUT,
         )
@@ -497,6 +538,57 @@ Do not generate p-values such as <0.001.
             .get("content")
         )
 
+    elif AI_PROVIDER == "gemini":
+        if not GEMINI_API_KEY:
+            raise RuntimeError(
+                "GEMINI_API_KEY is required when AI_PROVIDER=gemini."
+            )
+
+        response = requests.post(
+            (
+                f"{GEMINI_BASE_URL}/models/"
+                f"{GEMINI_CHAT_MODEL}:generateContent"
+            ),
+            headers={
+                "x-goog-api-key": GEMINI_API_KEY,
+                "Content-Type": "application/json",
+            },
+            json={
+                "systemInstruction": {
+                    "parts": [{"text": system_prompt}]
+                },
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [{"text": user_prompt}],
+                    }
+                ],
+                "generationConfig": {
+                    "temperature": 0,
+                },
+            },
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        response.raise_for_status()
+
+        candidates = response.json().get("candidates", [])
+
+        answer = None
+
+        if candidates:
+            parts = (
+                candidates[0]
+                .get("content", {})
+                .get("parts", [])
+            )
+
+            answer = "\n".join(
+                part["text"]
+                for part in parts
+                if isinstance(part.get("text"), str)
+            )
+
     else:
         response = requests.post(
             CHAT_URL,
@@ -506,7 +598,10 @@ Do not generate p-values such as <0.001.
                 "options": {
                     "temperature": 0,
                 },
-                "messages": messages,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
             },
             timeout=REQUEST_TIMEOUT,
         )

@@ -194,35 +194,36 @@ st.markdown(
         opacity: 1 !important;
     }
 
-    /* Metrics */
+    /* Metrics: white boxes, black text and borders */
 
     [data-testid="stMetric"] {
         background: #FFFFFF !important;
-        border: 1px solid #D8E1EB !important;
+        border: 1px solid #000000 !important;
         border-radius: 15px !important;
         padding: 17px !important;
-        box-shadow: 0 3px 12px rgba(35,55,80,0.045);
+        box-shadow: none !important;
     }
 
+    /* Metric labels */
     [data-testid="stMetricLabel"],
     [data-testid="stMetricLabel"] * {
-        color: #475569 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         font-size: 13px !important;
         font-weight: 600 !important;
         opacity: 1 !important;
     }
 
+    /* Metric values */
     [data-testid="stMetricValue"],
     [data-testid="stMetricValue"] * {
-        color: #172B4D !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
         font-weight: 750 !important;
         opacity: 1 !important;
     }
 
-    /* Metric delta labels and arrows */
-
-    [data-testid="stMetric"],
-    [data-testid="stMetric"] *,
+    /* Metric delta text and arrows */
     [data-testid="stMetricDelta"],
     [data-testid="stMetricDelta"] * {
         color: #000000 !important;
@@ -230,8 +231,8 @@ st.markdown(
         opacity: 1 !important;
     }
 
-    [data-testid="stMetric"] svg,
-    [data-testid="stMetricDelta"] svg {
+    [data-testid="stMetricDelta"] svg,
+    [data-testid="stMetricDelta"] svg * {
         fill: #000000 !important;
         color: #000000 !important;
         stroke: #000000 !important;

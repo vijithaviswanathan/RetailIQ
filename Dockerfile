@@ -1,3 +1,4 @@
+
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -12,6 +13,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY pyproject.toml requirements.txt README.md ./
 COPY src/ ./src/
+COPY reports/ ./reports/
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir .
